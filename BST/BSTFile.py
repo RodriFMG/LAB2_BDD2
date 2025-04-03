@@ -206,7 +206,10 @@ class BSTFile:
                     hijo = left if left != -1 else right
                     file.seek(0, 0)
                     file.write(struct.pack("i", hijo))
-                    file.seek(4 + RECORD_SIZE - factorNode, 0)
+                    file.seek(4 + RECORD_SIZE - 8, 0)
+
+                    # borro ambos hijos.
+                    file.write(struct.pack("i", -1))
                     file.write(struct.pack("i", -1))
                 else:
 
@@ -252,7 +255,6 @@ class BSTFile:
                 dataR = struct.pack("i", rightIO if PosPadreIO == PosNode else right)
 
                     # LE QUITO LOS ENLACES AL NODO A ELIMINAR.
-                file.seek(-8, 1)
                 file.write(struct.pack("i", -1))
                 file.write(struct.pack("i", -1))
 
