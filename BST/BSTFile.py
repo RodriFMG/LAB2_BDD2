@@ -29,10 +29,10 @@ class BSTFile:
 
             # Para empezar desde 0
             TotalRegisters -= 1
+            pos = 0
 
             while True:
 
-                pos = 0
                 file.seek(pos * RECORD_SIZE, 0)
 
                 # Devuelve un array con todos los campos puestos en EL FORMATO.
@@ -73,9 +73,9 @@ class BSTFile:
 
         with open(self.FileName, "rb") as file:
 
+            pos = 0
             while True:
 
-                pos = 0
                 file.seek(pos*RECORD_SIZE, 0)
                 idNode = struct.unpack("i", file.read(4))
 
@@ -106,7 +106,111 @@ class BSTFile:
                     return False
 
     def Remove(self, ID):
-        pass
+
+        # validación de que el nodo existe...
+
+        with open(self.FileName, "r+b") as file:
+
+            pos = 0
+            while True:
+
+                file.seek(pos*RECORD_SIZE)
+                idNode = struct.unpack("i", file.read(4))
+
+                if idNode == ID:
+                    PosNode = pos
+                    break
+                elif idNode > ID:
+
+                    IdToLeft = RECORD_SIZE - 4 - 8
+                    file.seek(IdToLeft)
+
+                    PosPadre = pos
+                    isLeft = True
+                    pos = struct.unpack("i", file.read(4))
+                else:
+
+                    IdToRight = RECORD_SIZE - 4 - 4
+                    file.seek(IdToRight)
+
+                    PosPadre = pos
+                    isLeft = False
+                    pos = struct.unpack("i", file.read(4))
+
+            file.seek(((PosNode + 1)*RECORD_SIZE) - 8, 0)
+            left = struct.unpack("i", file.read(4))
+            right = struct.unpack("i", file.read(4))
+            factor = 8 if isLeft else 4
+
+            if left == -1 and right == -1:
+
+                data = struct.pack("i", -1)
+                file.seek(((PosPadre+1)*RECORD_SIZE) - factor, 0)
+                file.write(data)
+
+            elif left != -1 or right != -1:
+
+                data = struct.pack("i", -1)
+
+                file.seek((PosNode + 1) * RECORD_SIZE - factor, 0)
+                file.write(data)
+
+                swap = struct.pack("i", left if isLeft else right)
+                file.seek((PosPadre + 1) * RECORD_SIZE - factor, 0)
+                file.write(swap)
+
+            elif left != 1 and right != 1:
+
+                pos = right
+                while True:
+
+                    file.seek(((pos + 1)*RECORD_SIZE) - 8, 0)
+                    leftIO = struct.unpack("i", file.read(4))
+                    rightIO = struct.unpack("i", file.read(4))
+
+                    if leftIO == -1 and rightIO == -1:
+                        break
+                    else:
+                        # el padre del nodo hoja
+                        PosSwap = pos
+
+                        # el nodo hoja
+                        pos = rightIO
+
+                # cambiamos la referencia del nodo del padre.
+                swap = struct.pack("i", pos)
+                file.seek((PosPadre + 1) * RECORD_SIZE - factor, 0)
+                file.write(swap)
+
+                # cambiamos la referencia del nodo actual
+                dataL = struct.pack("i", -1)
+                dataR = struct.pack("i", -1)
+                file.seek(((PosNode+1)*RECORD_SIZE)-8, 0)
+                file.write(dataL)
+                file.write(dataR)
+
+                # cambiamos la referencia del nodo InOrden
+                dataL = struct.pack("i", left)
+                dataR = struct.pack("i", right)
+                file.seek(((pos+1)*RECORD_SIZE)-8, 0)
+                file.write(dataL)
+                file.write(dataR)
+
+                # al padre del nodo InOrden le quitamos la referencia al nodo elegido
+                dataR = struct.pack("i", PosSwap)
+                file.seek(((PosSwap+1)*RECORD_SIZE)-4, 0)
+                file.write(dataR)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
