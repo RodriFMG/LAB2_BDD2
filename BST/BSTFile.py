@@ -208,7 +208,7 @@ class BSTFile:
                     file.write(struct.pack("i", hijo))
                     file.seek(4 + RECORD_SIZE - 8, 0)
 
-                    # borro ambos hijos.
+                    # borro ambos hijos. CHECAR
                     file.write(struct.pack("i", -1))
                     file.write(struct.pack("i", -1))
                 else:
