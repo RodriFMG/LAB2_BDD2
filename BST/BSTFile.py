@@ -14,7 +14,7 @@ class BSTFile:
     def insert(self, Venta):
 
         if self.Search(Venta.id) is True:
-            ValueError(f"El ID: {Venta.id} ya existe entre los registros.")
+            raise ValueError(f"El ID: {Venta.id} ya existe entre los registros.")
 
         with open(self.FileName, "r+b") as file:
 
@@ -64,13 +64,12 @@ class BSTFile:
                 else:
                     NodePos = pos
 
+            # Cambiando la referencia al nodo padre del registro insertado.
             data = struct.pack("i", TotalRegisters)
-            if IsLeft:
-                file.seek((NodePos + 1) * RECORD_SIZE - 8, 0)
-                file.write(data)
-            else:
-                file.seek((NodePos + 1) * RECORD_SIZE - 4, 0)
-                file.write(data)
+            factor = 8 if IsLeft else 4
+
+            file.seek((NodePos + 1) * RECORD_SIZE - factor, 0)
+            file.write(data)
 
     def Search(self, ID):
 
@@ -80,7 +79,7 @@ class BSTFile:
             while True:
 
                 file.seek(pos*RECORD_SIZE, 0)
-                idNode = struct.unpack("i", file.read(4))
+                idNode = struct.unpack("i", file.read(4))[0]
 
                 if idNode == ID:
 
@@ -97,7 +96,7 @@ class BSTFile:
                     IdToLeft = RECORD_SIZE - 4 - 8
                     file.seek(IdToLeft, 1)
 
-                    pos = struct.unpack("i", file.read(4))
+                    pos = struct.unpack("i", file.read(4))[0]
 
                 # right
                 else:
@@ -105,7 +104,7 @@ class BSTFile:
                     IdToRight = RECORD_SIZE - 4 - 4
                     file.seek(IdToRight, 1)
 
-                    pos = struct.unpack("i", file.read(4))
+                    pos = struct.unpack("i", file.read(4))[0]
 
                 # Registro no existente.
                 if pos == -1:
@@ -114,7 +113,7 @@ class BSTFile:
     def Remove(self, ID):
 
         if self.Search(ID) is False:
-            ValueError(f"El {ID} no existe en el registro.")
+            raise ValueError(f"El {ID} no existe en el registro.")
 
         with open(self.FileName, "r+b") as file:
 
