@@ -1,16 +1,27 @@
-# This is a sample Python script.
-
-# Press Mayús+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from BST.Venta import Venta
+from BST.BSTFile import BSTFile
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+if __name__ == "__main__":
+
+    ventas = [
+        Venta(3, "Producto A", 100, 19.99, "2023-04-01"),
+        Venta(2, "Producto B", 50, 29.99, "2023-04-02"),
+        Venta(4, "Producto C", 200, 9.99, "2023-04-03"),
+        Venta(5, "Producto D", 0, 39.99, "2023-04-04"),
+        Venta(1, "Producto E", 15, 49.99, "2023-04-05")
+    ]
+
+    # Muestra los detalles de las ventas
+    #for venta in ventas:
+    #    print(venta)
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+    bst = BSTFile("./BST/binario.dat")
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    #for venta in ventas:
+    #    bst.insert(venta)
+
+    bst.Remove()
+    print(bst.ReadVenta(0))
+

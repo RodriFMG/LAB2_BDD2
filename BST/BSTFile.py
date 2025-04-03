@@ -1,5 +1,6 @@
 import struct
-from Venta import FORMAT, Venta
+import os
+from .Venta import FORMAT, Venta
 
 RECORD_SIZE = struct.calcsize(FORMAT)
 
@@ -8,15 +9,20 @@ class BSTFile:
 
     def __init__(self, File):
 
+        if os.path.exists(File) is False:
+            raise ValueError(f"El fichero de la ruta {File} no existe.")
+
         self.FileName = File
 
     # falta no considerar a los elementos BORRADOS.
-    def insert(self, Venta):
+    def Insert(self, Venta):
 
         if self.Search(Venta.id) is True:
             raise ValueError(f"El ID: {Venta.id} ya existe entre los registros.")
 
         with open(self.FileName, "r+b") as file:
+
+            file.seek(0, 0)
 
             idInsert = Venta.id
 
@@ -27,12 +33,14 @@ class BSTFile:
             # 0 <- puntero al incio
             file.seek(0, 2)
             file.write(Venta.to_byte())
+            file.seek(0, 0)
 
-            TotalRegisters = len(file.read()) / RECORD_SIZE
+            TotalRegisters = int(len(file.read()) / RECORD_SIZE)
 
-            # Para empezar desde 0
-            TotalRegisters -= 1
+            print("Content: ", TotalRegisters)
+
             pos = 0
+            NodePos = 0
 
             while True:
 
@@ -65,28 +73,41 @@ class BSTFile:
                     NodePos = pos
 
             # Cambiando la referencia al nodo padre del registro insertado.
-            data = struct.pack("i", TotalRegisters)
-            factor = 8 if IsLeft else 4
 
-            file.seek((NodePos + 1) * RECORD_SIZE - factor, 0)
-            file.write(data)
+            if TotalRegisters != 1:
+                data = struct.pack("i", TotalRegisters-1)
+                factor = 8 if IsLeft else 4
+                file.seek((NodePos+1) * RECORD_SIZE - factor, 0)
+                file.write(data)
 
     def Search(self, ID):
 
         with open(self.FileName, "rb") as file:
 
+
+
+
+            file.seek(0, 0)
+            TotalBytes = len(file.read())
+
+            if TotalBytes == 0:
+                return False
+
             pos = 0
             while True:
 
-                file.seek(pos*RECORD_SIZE, 0)
+
+
+                file.seek(pos * RECORD_SIZE, 0)
                 idNode = struct.unpack("i", file.read(4))[0]
+
 
                 if idNode == ID:
 
                     # Si quiero retornar la venta, pero generalmente se quiere retornar el booleano.
                     # Como avance 4 bytes, lo retrocedo en base la posición actual.
-                    #file.seek(-4, 1)
-                    #return Venta.to_data(file.read(RECORD_SIZE))
+                    # file.seek(-4, 1)
+                    # return Venta.to_data(file.read(RECORD_SIZE))
                     return True
 
 
@@ -117,10 +138,12 @@ class BSTFile:
 
         with open(self.FileName, "r+b") as file:
 
+            file.seek(0, 0)
+
             pos = 0
             while True:
 
-                file.seek(pos*RECORD_SIZE)
+                file.seek(pos * RECORD_SIZE)
                 idNode = struct.unpack("i", file.read(4))
 
                 if idNode == ID:
@@ -143,7 +166,7 @@ class BSTFile:
                     isLeft = False
                     pos = struct.unpack("i", file.read(4))
 
-            file.seek(((PosNode + 1)*RECORD_SIZE) - 8, 0)
+            file.seek(((PosNode + 1) * RECORD_SIZE) - 8, 0)
 
             # hijos del nodo a borrar.
             left = struct.unpack("i", file.read(4))[0]
@@ -154,7 +177,7 @@ class BSTFile:
             if left == -1 and right == -1:
 
                 data = struct.pack("i", -1)
-                file.seek(((PosPadre+1)*RECORD_SIZE) - factor, 0)
+                file.seek(((PosPadre + 1) * RECORD_SIZE) - factor, 0)
                 file.write(data)
 
             # Caso 2: el nodo tiene 1 hijo
@@ -179,7 +202,7 @@ class BSTFile:
                 PosPadreIO = PosNode
                 while True:
 
-                    file.seek(((pos + 1)*RECORD_SIZE) - 8, 0)
+                    file.seek(((pos + 1) * RECORD_SIZE) - 8, 0)
                     leftIO = struct.unpack("i", file.read(4))[0]
 
                     if leftIO == -1:
@@ -203,9 +226,8 @@ class BSTFile:
                     # Actualizar la referencia del padre del sucesor inorden
                     # Si son iguales, con el cambio del sucesor InOrden es suficiente.
                     if PosPadreIO != PosNode:
-
                         # Si son diferentes, se asume que siempre será el hijo izquierdo
-                        file.seek((PosPadreIO+1)*RECORD_SIZE - 8, 0)
+                        file.seek((PosPadreIO + 1) * RECORD_SIZE - 8, 0)
 
                         # le pasamos el hijo derecho, en caso tenga.
                         file.write(rightIO)
@@ -213,25 +235,14 @@ class BSTFile:
                     # Quitamos las referencias al nodo a eliminar, al colocar estas
                     # nunca se llegará a este nodo, simulando que esta eliminado.
                     data = struct.pack("i", -1)
-                    file.seek((PosNode+1)*RECORD_SIZE - 8, 0)
+                    file.seek((PosNode + 1) * RECORD_SIZE - 8, 0)
                     file.write(data)
                     file.write(data)
 
+    def ReadVenta(self, pos):
 
+        with open(self.FileName, "rb") as file:
 
+            file.seek(pos*RECORD_SIZE)
+            print(Venta.to_data(file.read(RECORD_SIZE)))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # el remove tiene que hacer que los registros borrados no apunte A NADA
-    # maybe poner un -2, en cada nodo.

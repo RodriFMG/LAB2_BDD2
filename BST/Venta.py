@@ -1,6 +1,7 @@
 import struct
 
-FORMAT = "4i30s4i8f10s4i4i"
+# no es necesario colocar el tamaño del float o int, los coloca struct en automatico.
+FORMAT = "i30sif10sii"
 
 
 class Venta:
@@ -42,6 +43,7 @@ class Venta:
             unpacked[4].decode().strip()
         ), unpacked[5], unpacked[6]
 
+    # Sirve para ejecutar esto al llamar como función a una clase.
     def __call__(self):
 
         print("Venta: ")
@@ -49,5 +51,12 @@ class Venta:
         print(f"Nombre: {self.name}")
         print(f"Stock: {self.stock}")
         print(f"Precio: {self.precio}")
-        print(f"Fecha: {self.date}")
+        print(f"Fecha: {self.date}\n")
+
+    # Sirve para poder usar una clase en un string, debe retornar si o si un string
+    # para el print o str.
+    def __str__(self):
+
+        return (f"Venta(id = {self.id}, nombre = {self.name}, stock = {self.stock}, precio = {self.stock}"
+                f"fecha = {self.date})")
 
