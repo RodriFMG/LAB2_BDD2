@@ -13,6 +13,9 @@ class BSTFile:
     # falta no considerar a los elementos BORRADOS.
     def insert(self, Venta):
 
+        if self.Search(Venta.id) is True:
+            ValueError(f"El ID: {Venta.id} ya existe entre los registros.")
+
         with open(self.FileName, "r+b") as file:
 
             idInsert = Venta.id
@@ -81,9 +84,12 @@ class BSTFile:
 
                 if idNode == ID:
 
+                    # Si quiero retornar la venta, pero generalmente se quiere retornar el booleano.
                     # Como avance 4 bytes, lo retrocedo en base la posición actual.
-                    file.seek(-4, 1)
-                    return Venta.to_data(file.read(RECORD_SIZE))
+                    #file.seek(-4, 1)
+                    #return Venta.to_data(file.read(RECORD_SIZE))
+                    return True
+
 
                 # left
                 elif idNode > ID:
@@ -107,7 +113,8 @@ class BSTFile:
 
     def Remove(self, ID):
 
-        # validación de que el nodo existe...
+        if self.Search(ID) is False:
+            ValueError(f"El {ID} no existe en el registro.")
 
         with open(self.FileName, "r+b") as file:
 
@@ -123,7 +130,7 @@ class BSTFile:
                 elif idNode > ID:
 
                     IdToLeft = RECORD_SIZE - 4 - 8
-                    file.seek(IdToLeft)
+                    file.seek(IdToLeft, 1)
 
                     PosPadre = pos
                     isLeft = True
@@ -131,75 +138,88 @@ class BSTFile:
                 else:
 
                     IdToRight = RECORD_SIZE - 4 - 4
-                    file.seek(IdToRight)
+                    file.seek(IdToRight, 1)
 
                     PosPadre = pos
                     isLeft = False
                     pos = struct.unpack("i", file.read(4))
 
             file.seek(((PosNode + 1)*RECORD_SIZE) - 8, 0)
-            left = struct.unpack("i", file.read(4))
-            right = struct.unpack("i", file.read(4))
+
+            # hijos del nodo a borrar.
+            left = struct.unpack("i", file.read(4))[0]
+            right = struct.unpack("i", file.read(4))[0]
             factor = 8 if isLeft else 4
 
+            # Caso 1: el nodo es hoja
             if left == -1 and right == -1:
 
                 data = struct.pack("i", -1)
                 file.seek(((PosPadre+1)*RECORD_SIZE) - factor, 0)
                 file.write(data)
 
-            elif left != -1 or right != -1:
+            # Caso 2: el nodo tiene 1 hijo
+            elif (left != -1) ^ (right != -1):
 
                 data = struct.pack("i", -1)
 
-                file.seek((PosNode + 1) * RECORD_SIZE - factor, 0)
+                # Actualizo el nodo a borrar para que no tenga enlaces.
+                factorNode = 4 if left != -1 else 8
+                file.seek((PosNode + 1) * RECORD_SIZE - factorNode, 0)
                 file.write(data)
 
-                swap = struct.pack("i", left if isLeft else right)
+                # hacer que el nodo padre apunte al hijo del nodo actual.
+                swap = struct.pack("i", left if left != -1 else right)
                 file.seek((PosPadre + 1) * RECORD_SIZE - factor, 0)
                 file.write(swap)
 
-            elif left != 1 and right != 1:
+            # Caso 3: el nodo tiene ambos hijos
+            elif left != -1 and right != -1:
 
-                pos = right
+                posIO = right
+                PosPadreIO = PosNode
                 while True:
 
                     file.seek(((pos + 1)*RECORD_SIZE) - 8, 0)
-                    leftIO = struct.unpack("i", file.read(4))
-                    rightIO = struct.unpack("i", file.read(4))
+                    leftIO = struct.unpack("i", file.read(4))[0]
 
-                    if leftIO == -1 and rightIO == -1:
+                    if leftIO == -1:
                         break
                     else:
-                        # el padre del nodo hoja
-                        PosSwap = pos
+                        PosPadreIO = posIO
+                        posIO = leftIO
 
-                        # el nodo hoja
-                        pos = rightIO
+                    # Leer los enlaces del sucesor inorden
+                    file.seek(((posIO + 1) * RECORD_SIZE) - 8, 0)
+                    leftIO = struct.unpack("i", file.read(4))[0]
+                    rightIO = struct.unpack("i", file.read(4))[0]
 
-                # cambiamos la referencia del nodo del padre.
-                swap = struct.pack("i", pos)
-                file.seek((PosPadre + 1) * RECORD_SIZE - factor, 0)
-                file.write(swap)
+                    # Reemplazar el nodo a eliminar con el sucesor inorden
+                    file.seek(-8, 1)
+                    dataL = struct.pack("i", left)
+                    dataR = struct.pack("i", -1 if PosPadreIO == PosNode else right)
+                    file.write(dataL)
+                    file.write(dataR)
 
-                # cambiamos la referencia del nodo actual
-                dataL = struct.pack("i", -1)
-                dataR = struct.pack("i", -1)
-                file.seek(((PosNode+1)*RECORD_SIZE)-8, 0)
-                file.write(dataL)
-                file.write(dataR)
+                    # Actualizar la referencia del padre del sucesor inorden
+                    # Si son iguales, con el cambio del sucesor InOrden es suficiente.
+                    if PosPadreIO != PosNode:
 
-                # cambiamos la referencia del nodo InOrden
-                dataL = struct.pack("i", left)
-                dataR = struct.pack("i", right)
-                file.seek(((pos+1)*RECORD_SIZE)-8, 0)
-                file.write(dataL)
-                file.write(dataR)
+                        # Si son diferentes, se asume que siempre será el hijo izquierdo
+                        file.seek((PosPadreIO+1)*RECORD_SIZE - 8, 0)
 
-                # al padre del nodo InOrden le quitamos la referencia al nodo elegido
-                dataR = struct.pack("i", PosSwap)
-                file.seek(((PosSwap+1)*RECORD_SIZE)-4, 0)
-                file.write(dataR)
+                        # le pasamos el hijo derecho, en caso tenga.
+                        file.write(rightIO)
+
+                    # Quitamos las referencias al nodo a eliminar, al colocar estas
+                    # nunca se llegará a este nodo, simulando que esta eliminado.
+                    data = struct.pack("i", -1)
+                    file.seek((PosNode+1)*RECORD_SIZE - 8, 0)
+                    file.write(data)
+                    file.write(data)
+
+
+
 
 
 
