@@ -86,4 +86,4 @@ if __name__ == "__main__":
     print("\n--- Resultados de Desempeño ---")
     for k, v in tiempos.items():
         print(f"{k}: {v:.6f} segundos")
-    #graficar_resultados(tiempos)
+    graficar_resultados(tiempos)
