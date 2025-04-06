@@ -1,6 +1,12 @@
-import time
-import pandas as pd
 import os
+import struct
+import time
+import csv
+
+import matplotlib
+matplotlib.use("TkAgg")
+
+import matplotlib.pyplot as plt
 from SEQUENTIAL.sequential_file import (
     insertar_registro,
     buscar_por_id,
@@ -13,61 +19,85 @@ csv_path = "../sales_dataset.csv"
 main_file_path = "../SEQUENTIAL/sequential_file.dat"
 aux_file_path = "../SEQUENTIAL/aux_file.dat"
 
-# Leer CSV
-df = pd.read_csv(csv_path)
+record_size = struct.calcsize("i30sif10sB")
 
-# Crear archivo secuencial inicial con 1000 registros y medir tiempo
-tiempo_csv_insert = []
-df_ordenado = df.sort_values(by="ID de la venta")
-os.makedirs("../SEQUENTIAL", exist_ok=True)
-with open(main_file_path, "wb") as f:
-    for _, row in df_ordenado.iterrows():
-        start = time.time()
-        insertar_registro(int(row["ID de la venta"]),
-                          row["Nombre producto"],
-                          int(row["Cantidad vendida"]),
-                          float(row["Precio unitario"]),
-                          row["Fecha de venta"])
-        end = time.time()
-        tiempo_csv_insert.append(end - start)
-# Crear archivo auxiliar vacío
-open(aux_file_path, "wb").close()
 
-# Insertar log(1000) = 10 registros adicionales y medir tiempo
-tiempo_insert = []
-for i in range(1000, 1009):
-    row = df.iloc[i % 1000]  # Reutilizamos registros existentes
-    start = time.time()
-    insertar_registro(int(row["ID de la venta"]) + 1000,  # Asegurar ID único
-                      row["Nombre producto"],
-                      int(row["Cantidad vendida"]),
-                      float(row["Precio unitario"]),
-                      row["Fecha de venta"])
-    end = time.time()
-    tiempo_insert.append(end - start)
+def cargar_ventasSEQUENTIAL(csv_path):
+    ventas = []
+    with open(csv_path, newline='', encoding='utf-8') as csvfile:
+        lector = csv.DictReader(csvfile)
+        for fila in lector:
+            ventas.append({
+                "id": int(fila["ID de la venta"]),
+                "nombre": fila["Nombre producto"],
+                "cantidad": int(fila["Cantidad vendida"]),
+                "precio": float(fila["Precio unitario"]),
+                "fecha": fila["Fecha de venta"]
+            })
+    return ventas
 
-# Buscar ID existente
-start = time.time()
-buscar_por_id(1000)  # Asegurar que existe
-end = time.time()
-tiempo_busqueda = end - start
 
-# Eliminar ID existente
-start = time.time()
-eliminar_por_id(1000)
-end = time.time()
-tiempo_eliminacion = end - start
+def benchmark_sequential(csv_path, ventas):
+    os.makedirs("../SEQUENTIAL", exist_ok=True)
+    if os.path.exists(main_file_path):
+        os.remove(main_file_path)
+    if os.path.exists(aux_file_path):
+        os.remove(aux_file_path)
 
-# Buscar por rango
-start = time.time()
-buscar_por_rango(1, 1000)
-end = time.time()
-tiempo_rango = end - start
+    tiempos = {}
 
-# Mostrar resultados
-print(f"Tiempo promedio de inserción (1000 registros CSV): {sum(tiempo_csv_insert)/len(tiempo_csv_insert):.6f} segundos")
-print(f"Tiempo promedio de inserción (10 registros extra): {sum(tiempo_insert)/len(tiempo_insert):.6f} segundos")
-print(f"Tiempo de búsqueda por ID: {tiempo_busqueda:.6f} segundos")
-print(f"Tiempo de eliminación por ID: {tiempo_eliminacion:.6f} segundos")
-print(f"Tiempo de búsqueda por rango: {tiempo_rango:.6f} segundos")
+    # 1. Inserción (1000)
+    inicio = time.perf_counter()
+    with open(main_file_path, "wb") as f:
+        for venta in ventas:
+            insertar_registro(
+                venta["id"], venta["nombre"], venta["cantidad"], venta["precio"], venta["fecha"]
+            )
+    fin = time.perf_counter()
+    tiempos["inserción"] = fin - inicio
 
+    # 2. Búsqueda específica
+    ids_buscar = [ventas[0]["id"], ventas[len(ventas)//2]["id"], ventas[-1]["id"]]
+    inicio = time.perf_counter()
+    for id_venta in ids_buscar:
+        buscar_por_id(id_venta)
+    fin = time.perf_counter()
+    tiempos["búsqueda específica"] = fin - inicio
+
+    # 3. Búsqueda por rango
+    inicio = time.perf_counter()
+    buscar_por_rango(ventas[0]["id"], ventas[-1]["id"])
+    fin = time.perf_counter()
+    tiempos["búsqueda por rango"] = fin - inicio
+
+    # 4. Eliminación
+    ids_eliminar = [ventas[0]["id"], ventas[-1]["id"]]
+    inicio = time.perf_counter()
+    for id_venta in ids_eliminar:
+        eliminar_por_id(id_venta)
+    fin = time.perf_counter()
+    tiempos["eliminación"] = fin - inicio
+
+    return tiempos
+
+
+def graficar_resultados(tiempos):
+    operaciones = list(tiempos.keys())
+    duraciones = list(tiempos.values())
+
+    plt.figure(figsize=(8, 5))
+    plt.bar(operaciones, duraciones, color="lightgreen")
+    plt.ylabel("Tiempo (segundos)")
+    plt.title("Evaluación de Desempeño - Archivo Secuencial")
+    plt.grid(axis="y")
+    plt.tight_layout()
+    plt.show()
+
+
+if __name__ == "__main__":
+    ventas = cargar_ventasSEQUENTIAL(csv_path)
+    tiempos = benchmark_sequential(csv_path, ventas)
+    print("\n--- Resultados de Desempeño ---")
+    for k, v in tiempos.items():
+        print(f"{k}: {v:.6f} segundos")
+    graficar_resultados(tiempos)

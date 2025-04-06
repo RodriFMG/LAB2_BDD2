@@ -2,11 +2,17 @@ import os
 import struct
 import time
 import csv
+
+import matplotlib
+
+matplotlib.use("TkAgg")
+
 import matplotlib.pyplot as plt
 from AVL.AVLfile import AVLFile
 from BST.Venta import Venta
 
-def cargar_ventas(csv_path):
+
+def cargar_ventasAVL(csv_path):
     ventas = []
     with open(csv_path, newline='', encoding='utf-8') as csvfile:
         lector = csv.DictReader(csvfile)
@@ -21,6 +27,7 @@ def cargar_ventas(csv_path):
             ventas.append(venta)
     return ventas
 
+
 def benchmark_avl(filename, ventas):
     if os.path.exists(filename):
         os.remove(filename)
@@ -33,13 +40,13 @@ def benchmark_avl(filename, ventas):
 
     # 1. Inserción
     inicio = time.perf_counter()
-    # for v in ventas:
-    #     avl.insert(v)
+    for v in ventas:
+        avl.insert(v)
     fin = time.perf_counter()
     tiempos["inserción"] = fin - inicio
 
     # 2. Búsqueda específica
-    ids_buscar = [ventas[0].id, ventas[len(ventas)//2].id, ventas[-1].id]
+    ids_buscar = [ventas[0].id, ventas[len(ventas) // 2].id, ventas[-1].id]
     inicio = time.perf_counter()
     for id in ids_buscar:
         avl.search(id)
@@ -60,9 +67,10 @@ def benchmark_avl(filename, ventas):
     fin = time.perf_counter()
     tiempos["eliminación"] = fin - inicio
 
-    #os.remove(filename)  # limpiar
+    # os.remove(filename)  # limpiar
 
     return tiempos
+
 
 def graficar_resultados(tiempos):
     operaciones = list(tiempos.keys())
@@ -76,10 +84,11 @@ def graficar_resultados(tiempos):
     plt.tight_layout()
     plt.show()
 
+
 if __name__ == "__main__":
-    csv_path = "sales_dataset.csv"
+    csv_path = "../sales_dataset.csv"
     filename = "avl_perf.dat"
-    ventas = cargar_ventas(csv_path)
+    ventas = cargar_ventasAVL(csv_path)
     tiempos = benchmark_avl(filename, ventas)
     print("\n--- Resultados de Desempeño ---")
     for k, v in tiempos.items():
