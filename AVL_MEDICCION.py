@@ -2,7 +2,7 @@ import os
 import struct
 import time
 import csv
-im
+
 import matplotlib.pyplot as plt
 from AVL.AVLfile import AVLFile
 from BST.Venta import Venta
