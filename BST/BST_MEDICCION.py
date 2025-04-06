@@ -91,7 +91,7 @@ def graficar_resultados(tiempos):
 
 
 if __name__ == "__main__":
-    csv_path = "sales_dataset.csv"
+    csv_path = "../sales_dataset.csv"
     filename = "bst_peft.dat"
     ventas = cargar_ventas(csv_path)
     tiempos = benchmark_bst(filename, ventas)

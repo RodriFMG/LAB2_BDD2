@@ -81,7 +81,7 @@ def graficar_resultados(tiempos):
     plt.show()
 
 if __name__ == "__main__":
-    csv_path = "sales_dataset.csv"
+    csv_path = "../sales_dataset.csv"
     filename = "avl_perf.dat"
     ventas = cargar_ventas(csv_path)
     tiempos = benchmark_avl(filename, ventas)
