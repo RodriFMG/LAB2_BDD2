@@ -2,11 +2,6 @@ import os
 import struct
 import time
 import csv
-
-import matplotlib
-
-matplotlib.use("TkAgg")
-
 import matplotlib.pyplot as plt
 from AVL.AVLfile import AVLFile
 from BST.Venta import Venta
@@ -67,7 +62,7 @@ def benchmark_avl(filename, ventas):
     fin = time.perf_counter()
     tiempos["eliminación"] = fin - inicio
 
-    # os.remove(filename)  # limpiar
+    os.remove(filename)  # limpiar
 
     return tiempos
 
