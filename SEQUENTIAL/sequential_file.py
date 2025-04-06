@@ -10,9 +10,9 @@ def calcular_k(tamano_archivo_bytes, record_size):
     return k
 
 
-csv_path = "./sales_dataset.csv"
-main_file_path = "./SEQUENTIAL/sequential_file.dat"
-aux_file_path = "./SEQUENTIAL/aux_file.dat"
+csv_path = "../sales_dataset.csv"
+main_file_path = "../SEQUENTIAL/sequential_file.dat"
+aux_file_path = "../SEQUENTIAL/aux_file.dat"
 record_size = struct.calcsize("i30sif10sB")
 
 # Crear archivo secuencial ordenado desde CSV
