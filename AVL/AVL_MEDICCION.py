@@ -2,7 +2,6 @@ import os
 import struct
 import time
 import csv
-
 import matplotlib.pyplot as plt
 from AVL.AVLfile import AVLFile
 from BST.Venta import Venta
@@ -35,7 +34,7 @@ def benchmark_avl(filename, ventas):
     # 1. Inserción
     inicio = time.perf_counter()
     for v in ventas:
-         avl.insert(v)
+        avl.insert(v)
     fin = time.perf_counter()
     tiempos["inserción"] = fin - inicio
 
@@ -79,7 +78,7 @@ def graficar_resultados(tiempos):
     plt.show()
 
 if __name__ == "__main__":
-    csv_path = "sales_dataset.csv"
+    csv_path = "../sales_dataset.csv"
     filename = "avl_perf.dat"
     ventas = cargar_ventas(csv_path)
     tiempos = benchmark_avl(filename, ventas)

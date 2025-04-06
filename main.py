@@ -31,7 +31,7 @@ if __name__ == "__main__":
     #    print(venta)
 
 
-    bst = BSTFile("./BST/binario.dat")
+    bst = BSTFile("bst_peft.dat")
 
     #for venta in ventas:
     #    bst.Insert(venta)
@@ -40,6 +40,5 @@ if __name__ == "__main__":
 
 
     # Falta testear desde EL ROOT para los 3 casos.
-    print(bst.ReadVenta(17))
-    print("Root: ", bst.getRoot())
+    bst.Search_Range(0  , 10)
 

@@ -376,3 +376,16 @@ class BSTFile:
         with open(self.FileName, "rb") as file:
             file.seek(0, 0)
             return struct.unpack("i", file.read(4))[0]
+
+    def Search_Range(self, id1, id2):
+
+        print("Root: ", self.getRoot(), "\n")
+
+        for i in range(id2 - id1):
+            if self.Search(i) is True:
+
+                datos = self.ReadVenta(i)
+                print(datos[0])
+                print("Left: ", datos[1])
+                print("Right: ", datos[2])
+                print("\n")
