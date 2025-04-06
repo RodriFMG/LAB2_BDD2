@@ -25,7 +25,7 @@ def cargar_desde_csv(avl: AVLFile, ruta_csv: str):
 
 def test_avl():
     filename = "avl_archivo.dat"
-    csv_path = "sales_dataset.csv"  # Asegúrate de que este archivo esté en la misma carpeta
+    csv_path = "../sales_dataset.csv"  # Asegúrate de que este archivo esté en la misma carpeta
 
     # Limpiar archivo si existe
     if os.path.exists(filename):
