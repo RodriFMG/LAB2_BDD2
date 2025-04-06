@@ -2,6 +2,7 @@ import os
 import struct
 import time
 import csv
+im
 import matplotlib.pyplot as plt
 from AVL.AVLfile import AVLFile
 from BST.Venta import Venta
@@ -33,10 +34,11 @@ def benchmark_avl(filename, ventas):
 
     # 1. Inserción
     inicio = time.perf_counter()
-    # for v in ventas:
-    #     avl.insert(v)
+    for v in ventas:
+         avl.insert(v)
     fin = time.perf_counter()
     tiempos["inserción"] = fin - inicio
+
 
     # 2. Búsqueda específica
     ids_buscar = [ventas[0].id, ventas[len(ventas)//2].id, ventas[-1].id]
@@ -60,7 +62,7 @@ def benchmark_avl(filename, ventas):
     fin = time.perf_counter()
     tiempos["eliminación"] = fin - inicio
 
-    #os.remove(filename)  # limpiar
+    os.remove(filename)  # limpiar
 
     return tiempos
 
@@ -84,4 +86,4 @@ if __name__ == "__main__":
     print("\n--- Resultados de Desempeño ---")
     for k, v in tiempos.items():
         print(f"{k}: {v:.6f} segundos")
-    graficar_resultados(tiempos)
+    #graficar_resultados(tiempos)
