@@ -13,7 +13,7 @@ from BST.BSTFile import BSTFile
 from BST.Venta import Venta
 
 
-def cargar_ventas(csv_path):
+def cargar_ventasBST(csv_path):
     ventas = []
     with open(csv_path, newline='', encoding='utf-8') as csvfile:
         lector = csv.DictReader(csvfile)
@@ -93,7 +93,7 @@ def graficar_resultados(tiempos):
 if __name__ == "__main__":
     csv_path = "../sales_dataset.csv"
     filename = "bst_peft.dat"
-    ventas = cargar_ventas(csv_path)
+    ventas = cargar_ventasBST(csv_path)
     tiempos = benchmark_bst(filename, ventas)
     print("\n--- Resultados de Desempeño ---")
     for k, v in tiempos.items():
